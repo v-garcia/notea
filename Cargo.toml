@@ -1,0 +1,8 @@
+[package]
+name = "notea"
+version = "0.1.0-alpha.1"
+edition = "2018"
+
+[dependencies]
+sled = "0.31.0"
+anyhow = "1.0.28"
