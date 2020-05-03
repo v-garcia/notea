@@ -6,3 +6,4 @@ edition = "2018"
 [dependencies]
 sled = "0.31.0"
 anyhow = "1.0.28"
+rand = "0.7.3"

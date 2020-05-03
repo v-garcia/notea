@@ -1,6 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use sled::{open as open_db, Db};
-use std::path::Path;
 use anyhow::{Result, anyhow};
 
 pub struct KVStore {
@@ -9,7 +8,7 @@ pub struct KVStore {
 
 impl KVStore {
 
-    pub fn init(path: &Path) -> Result<KVStore> {
+    pub fn init(path: &str) -> Result<KVStore> {
 
         let db = open_db(path)?;
 
@@ -42,6 +41,10 @@ impl KVStore {
         };
 
         r
+    }
+
+    pub fn inner_db(&self) -> &Db {
+        return &self.db;
     }
 
 
