@@ -35,7 +35,6 @@ impl KVStore {
                 _                                       => "nothing",
             };
            
-    
             tree.insert(ts_k.as_ref(), ts_v)?;
             tree.insert(key, val)?;
             Ok(())
