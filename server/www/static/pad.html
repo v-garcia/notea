@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Pad</title>
+</head>
+
+<body>
+  <h1>Pad</h1>
+  <!-- <script src="/static/pad.js"></script> -->
+
+  <label id="message">To encode:<textarea id="textarea-input" rows="5" cols="33"></textarea></label>
+  <div>Hash value: <span id="hash"></span></div>
+  <div>New hash value: <span id="current-hash"></span></div>
+  <button id="send-message">SEND</button>
+  <button id="receive-message">GET</button>
+  <script>
+    let blob = null;
+    //
+    document.getElementById('textarea-input').addEventListener('input', onInputChange);
+    document.getElementById('send-message').addEventListener('click', onSendMessage);
+    document.getElementById('receive-message').addEventListener('click', onGetMessage);
+
+    let hash = null;
+    function setHash(_hash) {
+      document.getElementById('hash').innerHTML = _hash;
+      hash = _hash;
+    }
+
+    let new_hash = null;
+    function setNewHash(_hash) {
+      document.getElementById('current-hash').innerHTML = _hash;
+      new_hash = _hash;
+    }
+
+    async function onGetMessage(e) {
+      const id = getId();
+      const data = await getData(id);
+      const str = dataToStr(data);
+
+      hash = await blobToB64Hash(data);
+
+      setHash(hash);
+
+      // assign
+      document.getElementById('textarea-input').value = str;
+      document.getElementById('textarea-input').dispatchEvent(new Event('input'));
+    }
+
+    async function onSendMessage(e) {
+      const id = getId();
+      const params = [id, blob, hash, new_hash];
+      console.log(params);
+      const r = await sendData(...params);
+      console.log(r);
+    }
+
+    async function onInputChange(e) {
+      let text = e.target.value;
+      blob = strToUint8Array(text);
+      new_hash = await blobToB64Hash(blob);
+      setNewHash(new_hash);
+    }
+
+    function getId() {
+      const parsedUrl = new URL(window.location.href);
+      const [_, id] = parsedUrl.pathname.split('/');
+      console.info(`id: ${id}`);
+      return id;
+    }
+
+    async function blobToB64Hash(data) {
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    }
+
+    function strToUint8Array(str) {
+      const utf8Encode = new TextEncoder();
+      return utf8Encode.encode(str);
+    }
+
+    function dataToStr(data) {
+      const utf8Decode = new TextDecoder();
+      return utf8Decode.decode(data);
+    }
+
+    async function getData(id, lastHash) {
+      const response = await fetch(`api/data/${id}`, {
+        headers: {
+          ...(lastHash && { 'Content-Newer-Than': lastHash }),
+        },
+      });
+      return response.arrayBuffer();
+    }
+
+    async function sendData(id, data, hash, newHash) {
+      return fetch(`api/data/${id}`, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'New-Content-Hash': newHash,
+          ...(hash && { 'Content-Hash': hash }),
+        },
+      });
+    }
+  </script>
+</body>
+
+</html>
